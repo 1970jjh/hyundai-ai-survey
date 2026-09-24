@@ -97,6 +97,7 @@ function GeminiCard({ data, onSaved }: { data: SettingsPayload; onSaved: (d: Set
 }
 
 function PasswordCard() {
+  const router = useRouter();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [msg, setMsg] = useState<Msg>(null);
   async function submit(e: React.FormEvent) {
@@ -106,6 +107,7 @@ function PasswordCard() {
       await api("/api/settings/password", { body: { current: form.current, next: form.next } });
       setForm({ current: "", next: "", confirm: "" });
       setMsg({ ok: true, text: "비밀번호를 바꿨습니다. 다른 기기의 로그인은 풀립니다." });
+      router.refresh(); // 초기 비밀번호 경고 띠를 내린다
     } catch (err) {
       setMsg({ ok: false, text: errorText(err) });
     }
@@ -117,12 +119,12 @@ function PasswordCard() {
     </label>
   );
   return (
-    <form className="feature" onSubmit={submit}>
+    <form className="feature" onSubmit={submit} id="password">
       <div className="feature-head">
         <div>
           <span className="eyebrow">Admin password</span>
           <h3>관리자 비밀번호</h3>
-          <p>처음 비밀번호는 20261105 입니다. 공유 전에 꼭 바꾸세요(6자 이상).</p>
+          <p>처음 비밀번호는 20261105(또는 배포 때 넣은 ADMIN_PASSWORD)입니다. 공유 전에 꼭 바꾸세요(6자 이상).</p>
         </div>
         <span className="index">02</span>
       </div>
@@ -175,7 +177,7 @@ function ResetCard({ storage }: { storage: string }) {
   );
 }
 
-export default function SettingsView({ initial }: { initial: SettingsPayload }) {
+export default function SettingsView({ initial, appsScriptCode }: { initial: SettingsPayload; appsScriptCode: string }) {
   const [data, setData] = useState(initial);
   return (
     <main className="admin">
@@ -194,7 +196,7 @@ export default function SettingsView({ initial }: { initial: SettingsPayload }) 
       <div className="settings-grid">
         <GeminiCard data={data} onSaved={setData} />
         <PasswordCard />
-        <SheetSettings data={data} onSaved={setData} />
+        <SheetSettings data={data} onSaved={setData} code={appsScriptCode} />
         <ResetCard storage={data.storage} />
       </div>
     </main>

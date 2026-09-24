@@ -95,3 +95,7 @@
 .hbar-track { height: 10px; background: #ecece3; }
 .hbar-track i { display: block; height: 100%; transition: width .4s; }
 .bars-svg { max-width: 560px; }
+.pw-banner { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; background: #7a2e1d; color: #fff8f1; padding: 12px 20px; font-size: 14px; line-height: 1.5; }
+.pw-banner a { color: #fff8f1; font-weight: 700; text-decoration: underline; white-space: nowrap; }
+.setup-error { max-width: 640px; margin: 12vh auto; padding: 32px 24px; border-left: 4px solid var(--rust, #a24f37); background: #f1e6dc; color: #5a3326; line-height: 1.7; }
+.setup-error h1 { font-size: 22px; margin: 0 0 12px; }

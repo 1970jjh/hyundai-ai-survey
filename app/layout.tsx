@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { STORAGE_MISSING_MESSAGE, storageMissing } from "@/lib/store";
 
 export const metadata: Metadata = {
   title: "AI 서베이랩 — 설문 생성·응답·분석",
@@ -21,7 +22,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Noto+Serif+KR:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {storageMissing() ? (
+          <main className="setup-error" role="alert" data-testid="storage-missing">
+            <h1>저장소 연결이 필요합니다</h1>
+            <p>{STORAGE_MISSING_MESSAGE}</p>
+          </main>
+        ) : (
+          children
+        )}
+      </body>
     </html>
   );
 }

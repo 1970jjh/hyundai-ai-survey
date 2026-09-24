@@ -1,7 +1,7 @@
 import { after, NextResponse } from "next/server";
 import { jsonError, parseBody, requireAdmin } from "@/lib/admin";
 import { surveyPatchSchema } from "@/lib/schemas";
-import { deleteSurvey, getSurvey, listResponses, updateSurvey } from "@/lib/surveys";
+import { deleteSurvey, getSurvey, listResponses, QuestionLockedError, updateSurvey } from "@/lib/surveys";
 import { notifySheet, surveyDeleteRecord, surveyRecord } from "@/lib/sheets";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -24,7 +24,13 @@ export async function PATCH(req: Request, { params }: Ctx) {
     const questions = body.data.questions ?? current?.questions ?? [];
     if (questions.length === 0) return jsonError("문항이 하나 이상 있어야 공개할 수 있습니다.");
   }
-  const survey = await updateSurvey(id, body.data);
+  let survey;
+  try {
+    survey = await updateSurvey(id, body.data);
+  } catch (err) {
+    if (err instanceof QuestionLockedError) return jsonError(err.message, 409);
+    throw err;
+  }
   if (!survey) return jsonError("설문을 찾을 수 없습니다.", 404);
   const origin = new URL(req.url).origin;
   after(async () => notifySheet([surveyRecord(survey, origin, (await listResponses(id)).length)]));

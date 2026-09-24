@@ -19,10 +19,10 @@ export function reportToText(r: Report): string {
     "3. 잘된 점",
     list(r.strengths),
     "",
-    "   개선점",
+    "4. 개선점",
     list(r.improvements),
     "",
-    "4. 다음 교육 제안",
+    "5. 다음 교육 제안",
     list(r.nextSteps),
   ].join("\n");
 }
@@ -81,9 +81,9 @@ export default function ReportPanel({ surveyId, insights, total, hasKey, onDone 
           </ul>
           <h4>3. 잘된 점</h4>
           <ul>{r.strengths.map((x, i) => <li key={i}>{x}</li>)}</ul>
-          <h4>3. 개선점</h4>
+          <h4>4. 개선점</h4>
           <ul>{r.improvements.map((x, i) => <li key={i}>{x}</li>)}</ul>
-          <h4>4. 다음 교육 제안</h4>
+          <h4>5. 다음 교육 제안</h4>
           <ul>{r.nextSteps.map((x, i) => <li key={i}>{x}</li>)}</ul>
         </>
       ) : (
@@ -92,8 +92,8 @@ export default function ReportPanel({ surveyId, insights, total, hasKey, onDone 
       <div className="report-chapters no-print">
         <span><b>1.</b> 핵심 요약</span>
         <span><b>2.</b> 문항별 해석</span>
-        <span><b>3.</b> 잘된 점 / 개선점</span>
-        <span><b>4.</b> 다음 교육 제안</span>
+        <span><b>3–4.</b> 잘된 점 / 개선점</span>
+        <span><b>5.</b> 다음 교육 제안</span>
       </div>
       <div className="buttons no-print">
         <button className="primary" type="button" onClick={generate} disabled={busy || !hasKey || total === 0}>

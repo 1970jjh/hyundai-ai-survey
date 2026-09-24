@@ -68,4 +68,10 @@ describe("CSV", () => {
   it("수식 주입을 막고 따옴표를 이스케이프", () => {
     expect(csv).toContain(`"'=SUM(1,2) 실습, 더 ""많이"""`);
   });
+  it("+ - @ 탭으로 시작하는 응답도 텍스트로(시트와 같은 방어)", () => {
+    const text = [{ id: "t", type: "text" as const, text: "의견", required: false, options: [] }];
+    const rows = ["+1", "-2", "@x", "	cmd"].map((v, i) => ({ id: `r${i}`, surveyId: "s", submittedAt: "2026-11-05T01:00:00Z", answers: { t: v } }));
+    const out = toCsv(text, rows);
+    for (const v of ["'+1", "'-2", "'@x", "'	cmd"]) expect(out).toContain(v);
+  });
 });

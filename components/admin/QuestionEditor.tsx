@@ -22,11 +22,14 @@ function move<T>(list: T[], from: number, to: number): T[] {
 interface Props {
   survey: Survey;
   responseCount: number;
+  /** 응답이 있는 문항: 문구·필수·순서만 바꿀 수 있다(서버도 같은 규칙으로 막는다) */
+  lockedIds: string[];
   onSaved: (s: Survey) => void;
   onDirtyChange: (dirty: boolean) => void;
 }
 
-export default function QuestionEditor({ survey, responseCount, onSaved, onDirtyChange }: Props) {
+export default function QuestionEditor({ survey, responseCount, lockedIds, onSaved, onDirtyChange }: Props) {
+  const locked = new Set(lockedIds);
   const [draft, setDraft] = useState<Draft>({ title: survey.title, description: survey.description, questions: survey.questions });
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -76,7 +79,9 @@ export default function QuestionEditor({ survey, responseCount, onSaved, onDirty
         <span className="index">01</span>
       </div>
       {responseCount > 0 && (
-        <p className="notice">이미 응답 {responseCount}건이 있습니다. 문항을 지우거나 보기를 바꾸면 기존 결과와 어긋날 수 있어요.</p>
+        <p className="notice">
+          이미 응답 {responseCount}건이 있습니다. 응답이 있는 문항(🔒)은 과거 결과를 지키기 위해 유형·보기를 바꾸거나 지울 수 없고, 문구만 고칠 수 있습니다.
+        </p>
       )}
       <label className="field">
         <span>설문 제목</span>
@@ -92,15 +97,18 @@ export default function QuestionEditor({ survey, responseCount, onSaved, onDirty
         {draft.questions.map((q, i) => (
           <div className="q-item" key={q.id} data-testid="q-item">
             <div className="q-item-head">
-              <small>QUESTION {String(i + 1).padStart(2, "0")}</small>
+              <small>
+                QUESTION {String(i + 1).padStart(2, "0")}
+                {locked.has(q.id) && <span data-testid="q-locked"> · 🔒 응답 있음 · 문구만 수정</span>}
+              </small>
               <div className="q-tools">
                 <button type="button" aria-label={`${i + 1}번 위로`} onClick={() => update({ ...draft, questions: move(draft.questions, i, i - 1) })} disabled={i === 0}>↑</button>
                 <button type="button" aria-label={`${i + 1}번 아래로`} onClick={() => update({ ...draft, questions: move(draft.questions, i, i + 1) })} disabled={i === draft.questions.length - 1}>↓</button>
-                <button type="button" aria-label={`${i + 1}번 삭제`} onClick={() => update({ ...draft, questions: draft.questions.filter((_, j) => j !== i) })}>삭제</button>
+                <button type="button" aria-label={`${i + 1}번 삭제`} onClick={() => update({ ...draft, questions: draft.questions.filter((_, j) => j !== i) })} disabled={locked.has(q.id)}>삭제</button>
               </div>
             </div>
             <div className="q-row">
-              <select className="select" aria-label={`${i + 1}번 유형`} value={q.type} onChange={(e) => changeType(i, e.target.value as QuestionType)}>
+              <select className="select" aria-label={`${i + 1}번 유형`} value={q.type} disabled={locked.has(q.id)} onChange={(e) => changeType(i, e.target.value as QuestionType)}>
                 {QUESTION_TYPES.map((t) => (
                   <option key={t} value={t}>{TYPE_LABEL[t]}</option>
                 ))}
@@ -113,6 +121,7 @@ export default function QuestionEditor({ survey, responseCount, onSaved, onDirty
                 <textarea
                   className="textarea"
                   aria-label={`${i + 1}번 보기`}
+                  readOnly={locked.has(q.id)}
                   value={q.options.join("\n")}
                   onChange={(e) => setQuestion(i, { options: e.target.value.split("\n").slice(0, 12) })}
                 />

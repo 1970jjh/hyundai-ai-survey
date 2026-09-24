@@ -3,11 +3,13 @@ import { aiFailure, jsonError, requireAdmin } from "@/lib/admin";
 import { writeReport, type Analysis } from "@/lib/ai";
 import { collectTexts, summarize } from "@/lib/aggregate";
 import { readSettings } from "@/lib/settings";
-import { getInsights, getSurvey, listResponses, saveInsights } from "@/lib/surveys";
+import { getInsights, getSurvey, listResponses, saveReport } from "@/lib/surveys";
+import { aiDeadline } from "@/lib/gemini";
 
 export const maxDuration = 60;
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const deadline = aiDeadline();
   const denied = await requireAdmin();
   if (denied) return denied;
   const { id } = await params;
@@ -18,13 +20,13 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const [s, insights] = await Promise.all([readSettings(), getInsights(id)]);
   try {
     const report = await writeReport(
-      { apiKey: s.geminiKey, model: s.model },
+      { apiKey: s.geminiKey, model: s.model, deadline },
       survey.title,
       summarize(survey.questions, responses),
       collectTexts(survey.questions, responses),
       insights.analysis?.data as Analysis | undefined,
     );
-    const next = await saveInsights(id, { report: { data: report, createdAt: new Date().toISOString() } });
+    const next = await saveReport(id, { data: report, createdAt: new Date().toISOString() });
     return NextResponse.json({ insights: next });
   } catch (err) {
     return aiFailure(err);

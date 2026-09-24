@@ -8,6 +8,8 @@ import { getTemplate, type TemplateKey } from "./templates";
 export interface AiConfig {
   apiKey?: string;
   model: GeminiModel;
+  /** 라우트 시작 때 정한 마감 시각(lib/gemini aiDeadline) */
+  deadline?: number;
 }
 
 const today = () => new Date().toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric" });

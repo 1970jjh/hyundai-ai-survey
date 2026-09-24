@@ -90,7 +90,7 @@ test("라이브: AI 설문 생성 → 공개 → 휴대폰 응답 → 대시보�
   // 결과 보고서
   await timed("ui:report", async () => {
     await page.getByRole("button", { name: /Gemini 보고서 생성/ }).click();
-    await expect(page.getByTestId("report-paper").getByRole("heading", { name: "4. 다음 교육 제안" })).toBeVisible({ timeout: 120_000 });
+    await expect(page.getByTestId("report-paper").getByRole("heading", { name: "5. 다음 교육 제안" })).toBeVisible({ timeout: 120_000 });
   });
   await expect(page.getByTestId("report-paper").locator("li").first()).toBeVisible();
 

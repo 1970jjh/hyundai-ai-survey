@@ -71,3 +71,4 @@
   .progress i.bar-d { display: none; }
   .progress i.bar-m { display: block; }
 }
+.question h2:focus:not(:focus-visible) { outline: none; }

@@ -34,12 +34,14 @@
 1. 이 페이지 맨 위의 **Deploy with Vercel** 버튼을 누릅니다.
 2. GitHub 연결 → 저장소 이름은 그대로 두고 **Create**.
 3. «Blob 저장소 만들기» 화면이 나오면 그대로 **Create / Connect**(비공개 저장소가 자동으로 연결됩니다).
+   - 이 단계를 건너뛰어 앱에 «저장소 연결이 필요합니다» 화면이 보이면: Vercel 프로젝트 › **Storage › Create › Blob**(Private) → 이 프로젝트에 **Connect** → **Deployments › Redeploy**.
+   - (선택) 초기 관리자 비밀번호를 처음부터 나만 아는 값으로 하려면 Vercel 프로젝트 › Settings › Environment Variables 에 `ADMIN_PASSWORD` 를 넣고 다시 배포하세요.
 4. **Deploy**를 누르고 1~2분 기다리면 `https://내프로젝트.vercel.app` 주소가 생깁니다.
 
 ### 첫 설정
-1. `https://내프로젝트.vercel.app/admin` 에 들어가 비밀번호 **20261105** 로 입장합니다.
+1. `https://내프로젝트.vercel.app/admin` 에 들어가 비밀번호 **20261105**(`ADMIN_PASSWORD` 를 넣었다면 그 값)로 입장합니다.
 2. 오른쪽 위 **설정** → «Gemini API 키»에 키를 붙여 넣고 **저장** → **Gemini 연결 테스트**.
-3. 같은 화면에서 **관리자 비밀번호를 꼭 바꾸세요.**
+3. 같은 화면에서 **관리자 비밀번호를 꼭 바꾸세요.** 20261105 는 이 안내문에 공개된 번호라, 바꾸기 전까지 관리자 화면 위에 빨간 경고 띠가 보입니다.
 4. 목록 화면으로 돌아가 첫 설문을 만들어 보세요.
 
 > QR 코드는 지금 열려 있는 주소로 만들어집니다. 반드시 배포된 주소(`…vercel.app/admin`)에서 공개·QR을 띄우세요.
@@ -56,13 +58,16 @@
 
 1. 구글시트를 새로 만듭니다.
 2. 시트 메뉴 **확장 프로그램 › Apps Script** → 앱의 «설정 › 구글시트 실시간 쌓기»에서 **코드 복사** → 붙여 넣고 저장.
-   (같은 코드가 이 저장소의 [`apps-script/Code.gs`](apps-script/Code.gs)에도 있습니다.)
+   앱에서 복사한 코드에는 **이 앱 전용 비밀값**이 들어 있어, 시트 주소를 아는 다른 사람이 데이터를 바꿀 수 없습니다.
+   (저장소의 [`apps-script/Code.gs`](apps-script/Code.gs)는 비밀값이 비어 있는 원본이라 그대로 쓰면 동작하지 않습니다.)
 3. **배포 › 새 배포 › 유형: 웹 앱**, 실행: 나 / 액세스: **모든 사용자** → 배포 → 권한 허용.
 4. 나온 웹 앱 주소(`https://script.google.com/macros/s/…/exec`)를 앱에 붙여 넣고 «실시간 전송 켜기» → **저장** → **연결 테스트**.
 5. 이미 받은 응답도 옮기려면 **지금까지 데이터 전부 보내기**.
 
 시트에는 설문마다 탭(«설문 제목 앞부분_ID», 첫 줄 = 제출시각 + 각 문항)이 생기고, 설문 목록은 `surveys` 탭에 정리됩니다.
-시트 전송이 실패해도 응답은 앱에 안전하게 저장되며, 마지막 오류는 설정 화면에 표시됩니다.
+설문 제목을 바꾸면 새 탭이 생기지 않고 같은 탭의 이름만 바뀝니다. `=`·`+`·`-`·`@` 로 시작하는 응답은 수식이 아닌 글자로 저장됩니다.
+시트 전송이 실패하면 잠시 뒤 두 번 더 보내 보고, 그래도 실패하면 설정 화면에 마지막 오류가 표시됩니다(응답은 앱에 안전하게 저장됨).
+설문을 삭제하거나 앱을 초기화해도 시트의 응답 탭은 지워지지 않습니다(설문 목록 탭의 줄만 지워짐). 필요 없으면 시트에서 직접 지우세요.
 
 ## 자주 묻는 질문
 **Q. 응답자가 몇 명까지 되나요?**
@@ -95,7 +100,9 @@ npm run test:e2e     # E2E(Playwright, 로컬 저장 모드)
 npm run test:live    # 실제 Gemini 호출(.env.test.local 의 GEMINI_API_KEY_FOR_TESTS 필요)
 ```
 - Next.js 16(App Router) · React 19 · TypeScript · Tailwind v4 · @vercel/blob(비공개) · @google/genai · zod · qrcode
-- 저장: `BLOB_READ_WRITE_TOKEN`(또는 `BLOB_STORE_ID`)이 있으면 Vercel Blob, 없으면 `DATA_DIR`(기본 `.data/`)
+- 저장: `BLOB_READ_WRITE_TOKEN`(또는 `BLOB_STORE_ID` + Vercel OIDC)이 있으면 Vercel Blob, 없으면 `DATA_DIR`(기본 `.data/`). Vercel(`VERCEL=1`)인데 Blob 이 없으면 로컬로 가지 않고 설정 오류 화면을 보여 줍니다.
+- 환경변수(선택): `ADMIN_PASSWORD` — 비밀번호를 한 번도 바꾸지 않았을 때의 초기 비밀번호(기본 20261105)
+- 동시성: 설정·설문 수정은 ETag 조건부 쓰기(충돌 시 최대 5회 재시도), 분석과 보고서는 별도 파일
 - 코드 구조: `lib/`(저장·인증·AI·집계·시트), `app/api/`(서버 API), `components/admin`·`components/respond`(화면)
 
 ---

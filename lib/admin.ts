@@ -34,9 +34,7 @@ export async function parseBody<T extends z.ZodType>(
   return { data: parsed.data };
 }
 
-export function clientIp(req: Request): string {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-}
+export { clientIp } from "./rateLimit";
 
 /** AI 호출 실패를 친절한 한국어 오류 응답으로 */
 export function aiFailure(err: unknown) {

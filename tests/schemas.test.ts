@@ -53,7 +53,11 @@ describe("설정 스키마", () => {
   it("Apps Script 웹 앱 주소만 허용(SSRF 방지)", () => {
     const ok = (u: string) => settingsPatchSchema.safeParse({ sheetUrl: u }).success;
     expect(ok("https://script.google.com/macros/s/AKfy_cb-123/exec")).toBe(true);
-    expect(ok("https://script.google.com/a/macros/hyundai.com/s/AKfy123/exec")).toBe(true);
+    // 회사 계정 주소는 /macros/s/... 형태로 바꿔 넣도록 안내(형식 하나만 허용)
+    expect(ok("https://script.google.com/a/macros/hyundai.com/s/AKfy123/exec")).toBe(false);
+    expect(settingsPatchSchema.safeParse({ sheetUrl: "https://script.google.com/a/macros/x.com/s/A/exec" }).error?.issues[0].message).toContain("/macros/s/");
+    expect(ok("https://script.google.com/macros/s/AKfy123/exec?x=1")).toBe(false);
+    expect(ok("https://script.google.com/macros/s/AKfy123/dev")).toBe(false);
     expect(ok("")).toBe(true);
     expect(ok("http://localhost:3000/x")).toBe(false);
     expect(ok("https://evil.com/macros/s/x/exec")).toBe(false);

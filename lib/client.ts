@@ -15,6 +15,11 @@ export function errorText(err: unknown): string {
   return err instanceof Error ? err.message : "알 수 없는 오류가 생겼습니다.";
 }
 
+/** 관리자 화면의 시각은 발표 기기의 시간대와 상관없이 서울 기준 */
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleString("ko-KR", { timeZone: "Asia/Seoul", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+export function formatTime(d: Date): string {
+  return d.toLocaleTimeString("ko-KR", { timeZone: "Asia/Seoul" });
 }

@@ -1,10 +1,16 @@
 import { randomBytes } from "node:crypto";
 import { getStore } from "./store";
-import type { Survey, SurveyInput, SurveyResponse, SurveyStatus, AnswerValue } from "./schemas";
+import { questionLockError, type Survey, type SurveyInput, type SurveyResponse, type SurveyStatus, type AnswerValue } from "./schemas";
 
 const surveyPath = (id: string) => `surveys/${id}.json`;
 const responsePrefix = (surveyId: string) => `responses/${surveyId}/`;
-const insightsPath = (id: string) => `insights/${id}.json`;
+// 분석과 보고서는 따로 저장 → 두 AI 작업이 동시에 끝나도 서로 덮어쓰지 않는다
+const insightsPrefix = (id: string) => `insights/${id}/`;
+const analysisPath = (id: string) => `${insightsPrefix(id)}analysis.json`;
+const reportPath = (id: string) => `${insightsPrefix(id)}report.json`;
+
+/** 응답이 있는 문항의 유형·보기를 바꾸려 할 때 */
+export class QuestionLockedError extends Error {}
 
 export function newId(len = 10): string {
   return randomBytes(16).toString("base64url").replace(/[-_]/g, "").slice(0, len);
@@ -41,21 +47,36 @@ export async function createSurvey(input: SurveyInput): Promise<Survey> {
   return survey;
 }
 
+export function answeredQuestionIds(responses: SurveyResponse[]): Set<string> {
+  return new Set(responses.flatMap((r) => Object.keys(r.answers)));
+}
+
+/**
+ * 조건부 수정: 동시에 온 다른 수정을 덮어쓰지 않고, 이미 삭제된 설문은 되살리지 않는다(null).
+ * 응답이 있는 문항의 유형·보기·ID 변경은 QuestionLockedError.
+ */
 export async function updateSurvey(
   id: string,
   patch: Partial<SurveyInput> & { status?: SurveyStatus },
 ): Promise<Survey | null> {
-  const current = await getSurvey(id);
-  if (!current) return null;
-  const next: Survey = { ...current, ...patch, updatedAt: new Date().toISOString() };
-  await getStore().putJson(surveyPath(id), next);
-  return next;
+  if (!(await getSurvey(id))) return null;
+  // ponytail: 응답 목록을 읽은 직후~저장 사이에 들어온 첫 응답까지는 막지 못한다(수 ms 창)
+  const answered = patch.questions ? answeredQuestionIds(await listResponses(id)) : new Set<string>();
+  let locked: string | null = null;
+  const saved = await getStore().updateJson<Survey>(surveyPath(id), (current) => {
+    if (!current) return undefined;
+    locked = patch.questions ? questionLockError(current.questions, patch.questions, answered) : null;
+    if (locked) return undefined;
+    return { ...current, ...patch, updatedAt: new Date().toISOString() };
+  });
+  if (locked) throw new QuestionLockedError(locked);
+  return saved;
 }
 
 export async function deleteSurvey(id: string): Promise<void> {
   const store = getStore();
-  const responses = await store.list(responsePrefix(id));
-  await store.delete([surveyPath(id), insightsPath(id), ...responses]);
+  const [responses, insights] = await Promise.all([store.list(responsePrefix(id)), store.list(insightsPrefix(id))]);
+  await store.delete([surveyPath(id), ...insights, ...responses]);
 }
 
 export async function saveResponse(surveyId: string, answers: Record<string, AnswerValue>): Promise<SurveyResponse> {
@@ -100,13 +121,22 @@ export interface Insights {
 }
 
 export async function getInsights(id: string): Promise<Insights> {
-  return (await getStore().getJson<Insights>(insightsPath(id))) ?? {};
+  const store = getStore();
+  const [analysis, report] = await Promise.all([
+    store.getJson<NonNullable<Insights["analysis"]>>(analysisPath(id)),
+    store.getJson<NonNullable<Insights["report"]>>(reportPath(id)),
+  ]);
+  return { ...(analysis ? { analysis } : {}), ...(report ? { report } : {}) };
 }
 
-export async function saveInsights(id: string, patch: Insights): Promise<Insights> {
-  const next = { ...(await getInsights(id)), ...patch };
-  await getStore().putJson(insightsPath(id), next);
-  return next;
+export async function saveAnalysis(id: string, analysis: NonNullable<Insights["analysis"]>): Promise<Insights> {
+  await getStore().putJson(analysisPath(id), analysis);
+  return getInsights(id);
+}
+
+export async function saveReport(id: string, report: NonNullable<Insights["report"]>): Promise<Insights> {
+  await getStore().putJson(reportPath(id), report);
+  return getInsights(id);
 }
 
 /** 모든 설문·응답·분석 삭제. includeSettings면 API 키·비밀번호·시트 설정까지 처음 상태로 */

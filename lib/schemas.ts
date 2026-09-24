@@ -45,6 +45,24 @@ export const questionSchema = z
   });
 export type Question = z.infer<typeof questionSchema>;
 
+/**
+ * 응답이 있는 문항은 문구·필수 여부·순서만 바꿀 수 있다(유형·보기·ID·삭제 금지).
+ * 과거 응답을 현재 문항 정의로 읽기 때문. 문제가 없으면 null.
+ */
+export function questionLockError(before: Question[], after: Question[], answered: Set<string>): string | null {
+  const nextById = new Map(after.map((q) => [q.id, q]));
+  for (const [i, q] of before.entries()) {
+    if (!answered.has(q.id)) continue;
+    const n = nextById.get(q.id);
+    const label = `${i + 1}번 문항 «${q.text}»에는 이미 응답이 있어`;
+    if (!n) return `${label} 삭제할 수 없습니다. 문구만 고칠 수 있습니다.`;
+    if (n.type !== q.type || JSON.stringify(n.options) !== JSON.stringify(q.options)) {
+      return `${label} 유형·보기를 바꿀 수 없습니다. 문구만 고칠 수 있습니다.`;
+    }
+  }
+  return null;
+}
+
 export const surveyStatusSchema = z.enum(["draft", "open", "closed"]);
 export type SurveyStatus = z.infer<typeof surveyStatusSchema>;
 
@@ -137,6 +155,9 @@ export const loginSchema = z.object({ password: z.string().min(1).max(100) });
 export const GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite"] as const;
 export type GeminiModel = (typeof GEMINI_MODELS)[number];
 
+/** 시트 전송 주소는 Apps Script 웹 앱 형식만 허용(임의 주소로 서버가 요청을 보내지 않도록) */
+export const SHEET_URL_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+
 export const settingsPatchSchema = z.object({
   geminiKey: z.string().trim().max(200).optional(),
   model: z.enum(GEMINI_MODELS).optional(),
@@ -144,8 +165,9 @@ export const settingsPatchSchema = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((u) => u === "" || /^https:\/\/script\.google\.com\/(a\/macros\/[\w.-]+|macros)\/s\/[\w-]+\/exec$/.test(u), {
-      message: "Apps Script 웹 앱 주소(https://script.google.com/macros/s/.../exec)를 붙여 넣으세요",
+    .refine((u) => u === "" || SHEET_URL_PATTERN.test(u), {
+      message:
+        "Apps Script 웹 앱 주소(https://script.google.com/macros/s/.../exec)를 붙여 넣으세요. 회사 계정 주소(/a/macros/회사도메인/s/...)라면 «/a/…/회사도메인» 부분을 지우고 /macros/s/... 형태로 넣으세요",
     })
     .optional(),
   sheetEnabled: z.boolean().optional(),

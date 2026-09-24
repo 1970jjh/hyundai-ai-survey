@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Survey } from "@/lib/schemas";
 import type { Summary } from "@/lib/aggregate";
 import type { Insights } from "@/lib/surveys";
-import { api, errorText, formatDate } from "@/lib/client";
+import { api, errorText, formatDate, formatTime } from "@/lib/client";
 import Masthead from "./Masthead";
 import QuestionEditor from "./QuestionEditor";
 import SharePanel from "./SharePanel";
@@ -107,7 +107,7 @@ export default function SurveyWorkspace({ initialSurvey, initialSummary, initial
             <strong>지금까지 도착한 의견</strong>
           </div>
           <div className="aside-footer">
-            <span>{results.updatedAt ? `${results.updatedAt.toLocaleTimeString("ko-KR")} 갱신` : "10초마다 자동 갱신"}</span>
+            <span>{results.updatedAt ? `${formatTime(results.updatedAt)} 갱신` : "10초마다 자동 갱신"}</span>
             <b>+{summary.today}명 오늘</b>
           </div>
         </aside>
@@ -120,7 +120,13 @@ export default function SurveyWorkspace({ initialSurvey, initialSummary, initial
 
         <Heading n="02" id="make" title="질문을 만드는 시간" sub="문항을 다듬고, 공개하고, QR로 나눕니다" />
         <div className="feature-grid">
-          <QuestionEditor survey={survey} responseCount={summary.total} onSaved={setSurvey} onDirtyChange={setDirty} />
+          <QuestionEditor
+            survey={survey}
+            responseCount={summary.total}
+            lockedIds={summary.questions.filter((q) => q.answered > 0).map((q) => q.id)}
+            onSaved={setSurvey}
+            onDirtyChange={setDirty}
+          />
           <div>
             <SharePanel survey={survey} dirty={dirty} onChange={setSurvey} />
           </div>

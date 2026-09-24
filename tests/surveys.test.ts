@@ -7,8 +7,10 @@ import {
   getSurvey,
   listResponses,
   listSurveys,
+  QuestionLockedError,
   resetAll,
-  saveInsights,
+  saveAnalysis,
+  saveReport,
   saveResponse,
   updateSurvey,
 } from "@/lib/surveys";
@@ -46,11 +48,16 @@ describe("설문 저장소", () => {
     expect(all.reduce((n, r) => n + (r.answers.q1 as number), 0)).toBe(60);
   });
 
-  it("인사이트 저장, 삭제 시 응답까지 함께 지움", async () => {
+  it("분석·보고서는 별도 파일: 동시에 저장해도 둘 다 남고, 삭제 시 응답까지 함께 지움", async () => {
     const s = await createSurvey(input);
     await saveResponse(s.id, { q1: 3 });
-    await saveInsights(s.id, { report: { data: { a: 1 }, createdAt: "x" } });
-    expect((await getInsights(s.id)).report?.data).toEqual({ a: 1 });
+    await Promise.all([
+      saveReport(s.id, { data: { a: 1 }, createdAt: "x" }),
+      saveAnalysis(s.id, { data: { b: 2 }, createdAt: "y", analyzed: 1, total: 1 }),
+    ]);
+    const both = await getInsights(s.id);
+    expect(both.report?.data).toEqual({ a: 1 });
+    expect(both.analysis?.data).toEqual({ b: 2 });
     await deleteSurvey(s.id);
     expect(await getSurvey(s.id)).toBeNull();
     expect(await listResponses(s.id)).toHaveLength(0);
@@ -65,5 +72,53 @@ describe("설문 저장소", () => {
     expect((await readSettings()).geminiKey).toBe("k-1234");
     await resetAll(true);
     expect((await readSettings()).geminiKey).toBeUndefined();
+  });
+});
+
+describe("설문 동시 수정·삭제", () => {
+  it("다른 필드를 동시에 고쳐도 모두 남는다", async () => {
+    const s = await createSurvey(input);
+    await Promise.all([
+      updateSurvey(s.id, { title: "새 제목" }),
+      updateSurvey(s.id, { status: "open" }),
+      updateSurvey(s.id, { description: "안내" }),
+    ]);
+    expect(await getSurvey(s.id)).toMatchObject({ title: "새 제목", status: "open", description: "안내" });
+  });
+
+  it("삭제와 수정이 겹쳐도 설문이 되살아나지 않는다", async () => {
+    const s = await createSurvey(input);
+    await Promise.all([deleteSurvey(s.id), updateSurvey(s.id, { title: "늦은 수정" })]);
+    expect(await getSurvey(s.id)).toBeNull();
+  });
+});
+
+describe("응답이 있는 문항 잠금", () => {
+  const two = {
+    ...input,
+    questions: [
+      { id: "q1", type: "single" as const, text: "좋았던 부분", required: true, options: ["이론", "실습"] },
+      { id: "q2", type: "text" as const, text: "의견", required: false, options: [] },
+    ],
+  };
+
+  it("응답 있는 문항은 유형·보기 변경·삭제 불가, 문구·필수 여부는 가능, 응답 없는 문항은 자유", async () => {
+    const s = await createSurvey(two);
+    await saveResponse(s.id, { q1: "실습" });
+    const [q1, q2] = two.questions;
+    await expect(updateSurvey(s.id, { questions: [{ ...q1, type: "multi" }, q2] })).rejects.toThrow(QuestionLockedError);
+    await expect(updateSurvey(s.id, { questions: [{ ...q1, options: ["이론", "토론"] }, q2] })).rejects.toThrow(/유형·보기/);
+    await expect(updateSurvey(s.id, { questions: [q2] })).rejects.toThrow(/삭제할 수 없습니다/);
+    await expect(updateSurvey(s.id, { questions: [{ ...q1, id: "q9" }, q2] })).rejects.toThrow(QuestionLockedError);
+    // 거부된 뒤에도 원래 문항 그대로
+    expect((await getSurvey(s.id))?.questions).toEqual(two.questions);
+
+    const ok = await updateSurvey(s.id, {
+      questions: [{ ...q2, type: "scale" as const }, { ...q1, text: "가장 좋았던 부분은?", required: false }],
+    });
+    expect(ok?.questions.map((q) => [q.id, q.type, q.text])).toEqual([
+      ["q2", "scale", "의견"],
+      ["q1", "single", "가장 좋았던 부분은?"],
+    ]);
   });
 });

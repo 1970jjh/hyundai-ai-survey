@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { TYPE_LABEL, type AnswerValue, type Question } from "@/lib/schemas";
 import QuestionInput from "./QuestionInput";
 
@@ -49,6 +49,18 @@ export default function RespondForm({ survey }: { survey: PublicSurvey }) {
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
 
+  // 휴대폰에서 다음/이전으로 옮기면 새 문항 제목으로 포커스(키보드·스크린리더 사용자가 이전 버튼에 머물지 않게)
+  const moved = useRef(false);
+  useEffect(() => {
+    if (!moved.current) return;
+    moved.current = false;
+    document.getElementById(`q-title-${qs[step]?.id}`)?.focus();
+  }, [step, qs]);
+  function goTo(i: number) {
+    moved.current = true;
+    setStep(i);
+  }
+
   const answeredCount = qs.filter((q) => isAnswered(answers[q.id])).length;
   const last = step === qs.length - 1;
 
@@ -70,7 +82,7 @@ export default function RespondForm({ survey }: { survey: PublicSurvey }) {
     const miss = missingOf([qs[step]]);
     if (miss.length) return setMissing(new Set(miss));
     if (last) return void submit();
-    setStep(step + 1);
+    goTo(step + 1);
   }
 
   async function submit(e?: React.FormEvent) {
@@ -128,7 +140,9 @@ export default function RespondForm({ survey }: { survey: PublicSurvey }) {
         <b className="latin">Learning notes</b>
         <span>
           <span className="step-desktop">모든 질문 / {qs.length}개 · {answeredCount}개 응답</span>
-          <span className="step-mobile" data-testid="step">{step + 1} / {qs.length}</span>
+          <span className="step-mobile" data-testid="step" aria-live="polite">
+            {step + 1} / {qs.length}
+          </span>
         </span>
       </div>
       <div className="progress" aria-hidden="true">
@@ -141,7 +155,7 @@ export default function RespondForm({ survey }: { survey: PublicSurvey }) {
             QUESTION {String(i + 1).padStart(2, "0")} · {TYPE_LABEL[q.type]}
             {q.required ? <span className="req">필수</span> : null}
           </small>
-          <h2>{q.text}</h2>
+          <h2 id={`q-title-${q.id}`} tabIndex={-1}>{q.text}</h2>
           <QuestionInput q={q} value={answers[q.id]} onChange={(v) => setAnswer(q.id, v)} />
           {missing.has(q.id) && <p className="err" role="alert">이 문항은 필수입니다.</p>}
         </div>
@@ -154,7 +168,7 @@ export default function RespondForm({ survey }: { survey: PublicSurvey }) {
         </button>
       </div>
       <div className="mobile-foot">
-        <button className="secondary" type="button" onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
+        <button className="secondary" type="button" onClick={() => goTo(Math.max(0, step - 1))} disabled={step === 0}>
           이전
         </button>
         <button className="primary" type="button" onClick={next} disabled={status === "sending"}>

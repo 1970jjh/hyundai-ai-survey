@@ -156,7 +156,7 @@ export const GEMINI_MODELS = ["gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.
 export type GeminiModel = (typeof GEMINI_MODELS)[number];
 
 /** 시트 전송 주소는 Apps Script 웹 앱 형식만 허용(임의 주소로 서버가 요청을 보내지 않도록) */
-export const SHEET_URL_PATTERN = /^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/;
+export const SHEET_URL_PATTERN = /^https:\/\/script\.google\.com\/(?:a\/macros\/[A-Za-z0-9.-]{1,100}|macros)\/s\/[\w-]+\/exec$/;
 
 export const settingsPatchSchema = z.object({
   geminiKey: z.string().trim().max(200).optional(),
@@ -167,7 +167,7 @@ export const settingsPatchSchema = z.object({
     .max(500)
     .refine((u) => u === "" || SHEET_URL_PATTERN.test(u), {
       message:
-        "Apps Script 웹 앱 주소(https://script.google.com/macros/s/.../exec)를 붙여 넣으세요. 회사 계정 주소(/a/macros/회사도메인/s/...)라면 «/a/…/회사도메인» 부분을 지우고 /macros/s/... 형태로 넣으세요",
+        "Apps Script 웹 앱 주소(https://script.google.com/macros/s/.../exec)를 붙여 넣으세요",
     })
     .optional(),
   sheetEnabled: z.boolean().optional(),

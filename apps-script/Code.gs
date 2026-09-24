@@ -42,8 +42,9 @@ function doPost(e) {
   try {
     var book = SpreadsheetApp.getActiveSpreadsheet();
     var skipped = 0;
+    var cache = {}; // 요청 안에서 탭·머리글을 한 번만 읽는다(레코드마다 다시 읽으면 수십 건에서 시간 초과)
     body.records.forEach(function (r) {
-      if (!apply_(book, r)) skipped++;
+      if (!apply_(book, r, cache)) skipped++;
     });
     SpreadsheetApp.flush();
     return reply_({ ok: true, count: body.records.length, skipped: skipped });
@@ -91,9 +92,12 @@ function text_(v) {
 }
 
 /** 적용했으면 true, 시트에 더 최신 값이 있어 건너뛰었으면 false */
-function apply_(book, r) {
-  var sheet = sheetFor_(book, r);
-  var headers = ensureHeaders_(sheet, Object.keys(r.row).concat([UPDATED_COL]));
+function apply_(book, r, cache) {
+  cache = cache || {};
+  var entry = cache[r.type];
+  if (!entry) entry = cache[r.type] = { sheet: sheetFor_(book, r), headers: null };
+  var sheet = entry.sheet;
+  var headers = (entry.headers = ensureHeaders_(sheet, Object.keys(r.row).concat([UPDATED_COL]), entry.headers));
   var rowIndex = findRow_(sheet, r.id);
   var incoming = Date.parse(r.updatedAt);
   if (rowIndex > 0) {
@@ -134,9 +138,9 @@ function sheetFor_(book, r) {
   return sheet;
 }
 
-function ensureHeaders_(sheet, keys) {
-  var lastCol = sheet.getLastColumn();
-  var headers = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String) : [];
+function ensureHeaders_(sheet, keys, known) {
+  var lastCol = known ? known.length : sheet.getLastColumn();
+  var headers = known ? known.slice() : lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String) : [];
   if (headers.length === 0) headers = ['ID'];
   var missing = keys.filter(function (k, i) {
     return headers.indexOf(k) === -1 && keys.indexOf(k) === i;

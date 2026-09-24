@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI 서베이랩 (hyundai-ai-survey)
 
-## Getting Started
+**한 줄로 설문을 만들고, 링크·QR로 응답을 받고, AI가 주관식까지 읽어 결과 보고서 초안을 써 주는 HR/HRD 담당자용 웹앱.**
 
-First, run the development server:
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F1970jjh%2Fhyundai-ai-survey&project-name=hyundai-ai-survey&repository-name=hyundai-ai-survey&stores=%5B%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D)
 
+![관리자 화면](docs/screenshots/admin.png)
+
+## 무엇을 할 수 있나요
+
+| 누가 | 들어가는 법 | 할 수 있는 일 |
+|---|---|---|
+| 응답자 | 설문 링크 또는 QR | 로그인 없이 응답. 휴대폰은 한 문항씩, 노트북은 한 화면에 전부. 기기당 1회 |
+| 관리자(HR/HRD 담당자) | `내주소/admin` → 비밀번호 | 설문 만들기·편집·공개/마감, 실시간 결과, AI 분석·보고서, CSV, 설정 |
+
+- **AI 설문 생성**: "신입사원 온보딩 교육 만족도, 10문항, 주관식 2개"처럼 한 줄만 쓰면 문항이 만들어집니다.
+- **템플릿 3종**: 교육 만족도 / 교육 전 요구조사 / 조직문화 펄스. 그대로 쓰거나, AI가 과정명에 맞게 다듬습니다.
+- **문항 유형**: 5점 척도, 객관식(단일·복수), 주관식, NPS(0~10). 순서 변경·삭제·필수 여부 지정.
+- **공개**: 응답 링크 + 스캔되는 QR 코드, 강의장 화면용 전체화면 QR. 마감/다시 열기.
+- **실시간 대시보드**: 응답 수, 평균 만족도, NPS, 문항별 분포 차트. 화면을 열어 두면 10초마다 자동 갱신.
+- **AI 주관식 분석**: 주제별 묶음(빈도순), 긍정·부정 비율, 대표 인용문. 응답이 아주 많으면 일부만 보내고 화면에 알려 줍니다.
+- **AI 결과 보고서**: 핵심 요약 → 문항별 해석 → 잘된 점/개선점 → 다음 교육 제안. 복사·A4 인쇄(PDF 저장).
+- **CSV 내보내기**, **구글시트 실시간 쌓기**(선택).
+- API 키가 없어도 설문 작성·응답 수집·차트·CSV는 그대로 됩니다.
+
+## 5분 설치 가이드
+
+### 준비물
+1. **GitHub 계정** — https://github.com/signup
+2. **Vercel 계정** — https://vercel.com/signup (GitHub로 가입하면 편합니다)
+3. **Gemini API 키** — https://aistudio.google.com/apikey 에서 «API 키 만들기» (무료로 시작할 수 있습니다)
+
+### 설치
+1. 이 페이지 맨 위의 **Deploy with Vercel** 버튼을 누릅니다.
+2. GitHub 연결 → 저장소 이름은 그대로 두고 **Create**.
+3. «Blob 저장소 만들기» 화면이 나오면 그대로 **Create / Connect**(비공개 저장소가 자동으로 연결됩니다).
+4. **Deploy**를 누르고 1~2분 기다리면 `https://내프로젝트.vercel.app` 주소가 생깁니다.
+
+### 첫 설정
+1. `https://내프로젝트.vercel.app/admin` 에 들어가 비밀번호 **20261105** 로 입장합니다.
+2. 오른쪽 위 **설정** → «Gemini API 키»에 키를 붙여 넣고 **저장** → **Gemini 연결 테스트**.
+3. 같은 화면에서 **관리자 비밀번호를 꼭 바꾸세요.**
+4. 목록 화면으로 돌아가 첫 설문을 만들어 보세요.
+
+> QR 코드는 지금 열려 있는 주소로 만들어집니다. 반드시 배포된 주소(`…vercel.app/admin`)에서 공개·QR을 띄우세요.
+
+## 교육 당일 사용법
+1. 설문을 만들고 **공개하기**.
+2. **QR 전체화면**을 강의장 화면에 띄웁니다(닫기: Esc).
+3. 참가자는 휴대폰 카메라로 QR을 찍어 응답합니다.
+4. 설문 화면 «응답을 읽는 시간»에서 결과가 10초마다 늘어나는 것을 함께 봅니다.
+5. 끝나면 **마감하기** → **Gemini로 주관식 분석** → **Gemini 보고서 생성** → **A4 PDF 인쇄** 또는 **복사**.
+
+## 구글시트 연결(선택)
+응답이 들어올 때마다 구글시트에 한 줄씩 쌓입니다. 구글 클라우드 콘솔이나 복잡한 인증은 필요 없습니다.
+
+1. 구글시트를 새로 만듭니다.
+2. 시트 메뉴 **확장 프로그램 › Apps Script** → 앱의 «설정 › 구글시트 실시간 쌓기»에서 **코드 복사** → 붙여 넣고 저장.
+   (같은 코드가 이 저장소의 [`apps-script/Code.gs`](apps-script/Code.gs)에도 있습니다.)
+3. **배포 › 새 배포 › 유형: 웹 앱**, 실행: 나 / 액세스: **모든 사용자** → 배포 → 권한 허용.
+4. 나온 웹 앱 주소(`https://script.google.com/macros/s/…/exec`)를 앱에 붙여 넣고 «실시간 전송 켜기» → **저장** → **연결 테스트**.
+5. 이미 받은 응답도 옮기려면 **지금까지 데이터 전부 보내기**.
+
+시트에는 설문마다 탭(«설문 제목 앞부분_ID», 첫 줄 = 제출시각 + 각 문항)이 생기고, 설문 목록은 `surveys` 탭에 정리됩니다.
+시트 전송이 실패해도 응답은 앱에 안전하게 저장되며, 마지막 오류는 설정 화면에 표시됩니다.
+
+## 자주 묻는 질문
+**Q. 응답자가 몇 명까지 되나요?**
+응답 1건이 파일 1개로 따로 저장되어 동시에 제출해도 서로 덮어쓰지 않습니다. 20명 동시 제출을 테스트로 확인했습니다.
+
+**Q. 같은 사람이 여러 번 응답하면요?**
+기본은 «기기당 1회»(브라우저에 기록)입니다. 같은 PC를 여러 사람이 쓰는 교육장이라면 설문 화면에서 이 옵션을 끄세요. 로그인 기반의 엄격한 중복 차단은 하지 않습니다.
+
+**Q. 응답은 익명인가요?**
+이름·이메일을 묻지 않으며, IP 등 식별 정보도 저장하지 않습니다. 주관식에 스스로 쓴 내용만 남습니다.
+
+**Q. AI 버튼이 눌리지 않아요.**
+설정에서 Gemini API 키를 등록하세요. 키는 서버(비공개 Blob)에만 저장되고 화면에는 끝 4자리만 보입니다.
+
+**Q. 모델을 바꾸고 싶어요.**
+설정에서 `gemini-3.7-flash`(기본) / `gemini-3.8-flash` / `gemini-3.5-flash-lite` 중 고를 수 있습니다.
+
+**Q. 비밀번호를 잊었어요.**
+Vercel 대시보드 › 프로젝트 › Storage › Blob 에서 `settings.json` 을 지우면 비밀번호가 20261105 로 돌아갑니다(API 키·시트 설정도 다시 입력해야 합니다).
+
+**Q. 데이터를 전부 지우려면?**
+설정 › «전체 초기화». 필요하면 먼저 각 설문의 원자료 CSV를 받아 두세요.
+
+## 개발자용
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000 (BLOB 토큰이 없으면 .data/ 폴더에 저장)
+npm test             # 단위 테스트(Vitest)
+npm run test:e2e     # E2E(Playwright, 로컬 저장 모드)
+npm run test:live    # 실제 Gemini 호출(.env.test.local 의 GEMINI_API_KEY_FOR_TESTS 필요)
 ```
+- Next.js 16(App Router) · React 19 · TypeScript · Tailwind v4 · @vercel/blob(비공개) · @google/genai · zod · qrcode
+- 저장: `BLOB_READ_WRITE_TOKEN`(또는 `BLOB_STORE_ID`)이 있으면 Vercel Blob, 없으면 `DATA_DIR`(기본 `.data/`)
+- 코드 구조: `lib/`(저장·인증·AI·집계·시트), `app/api/`(서버 API), `components/admin`·`components/respond`(화면)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+JJ Creative 교육연구소 · 2026 현대그룹 인재육성실무협의회

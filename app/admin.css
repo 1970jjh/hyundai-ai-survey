@@ -1,0 +1,97 @@
+/* 관리자 화면 — 시안 C 어휘로 만든 추가 컴포넌트 */
+.notice { border-left: 3px solid var(--rust); background: #f1e6dc; color: #7a4a39; padding: 10px 12px; font-size: 12px; line-height: 1.6; margin: 12px 0; }
+.notice.ok { border-color: var(--ok); background: #e3ebe3; color: #365a45; }
+.notice.info { border-color: var(--forest); background: #e8ece3; color: #3d5546; }
+.muted { color: #858b7f; font-size: 11px; line-height: 1.6; }
+.field { display: grid; gap: 6px; margin: 12px 0; }
+.field > span { font-size: 11px; font-weight: 800; color: #5b665c; }
+.input, .textarea, .select { width: 100%; border: 1px solid #cdd3c7; background: #fcfdf9; padding: 10px 12px; font-size: 13px; color: var(--ink); border-radius: 0; }
+.textarea { resize: vertical; min-height: 70px; line-height: 1.6; }
+.check { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: #5b665c; }
+.check input { accent-color: var(--forest); width: 15px; height: 15px; }
+.empty { border: 1px dashed #c2c6b6; padding: 36px 20px; text-align: center; color: #7d8578; line-height: 1.8; font-size: 12px; background: #f8f5ee; }
+.empty strong { display: block; font-family: "Noto Serif KR", serif; color: var(--forest); font-size: 17px; margin-bottom: 6px; }
+.spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 6px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 로그인 */
+.login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login-card { width: min(420px, 100%); border-top: 2px solid var(--forest); background: #fffefa; box-shadow: 8px 9px 0 #e6e0d3; padding: 28px 30px 30px; }
+.login-card h1 { font-size: 26px; font-weight: 600; margin: 16px 0 6px; }
+
+/* 설문 목록 */
+.survey-table { width: 100%; border-collapse: collapse; }
+.survey-table th { text-align: left; font-size: 10px; letter-spacing: .1em; color: #85897b; font-weight: 800; padding: 10px 8px; border-bottom: 1px solid #aeb4a3; }
+.survey-table td { padding: 16px 8px; border-bottom: 1px solid #d9dbcf; font-size: 12px; color: #5c695d; vertical-align: middle; }
+.survey-table td.title a { font-family: "Noto Serif KR", serif; font-size: 16px; color: var(--forest); letter-spacing: -.05em; font-weight: 600; }
+.survey-table td.num { font-family: "DM Serif Display", serif; font-size: 22px; color: var(--forest); }
+.status { font-size: 10px; font-weight: 800; letter-spacing: .05em; white-space: nowrap; }
+.status.open { color: var(--ok); }
+.status.closed { color: #9a6f5f; }
+.status.draft { color: #8c9185; }
+
+/* 문항 편집기 */
+.q-list { display: grid; gap: 10px; }
+.q-item { border: 1px solid #d9dbcf; background: #fffefa; padding: 14px 16px; }
+.q-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.q-item-head small { color: var(--rust); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.q-tools { display: flex; gap: 4px; flex-wrap: wrap; }
+.q-tools button { border: 1px solid #cdd3c7; background: transparent; color: #5b665c; font-size: 11px; padding: 5px 8px; min-width: 30px; }
+.q-row { display: grid; grid-template-columns: 150px 1fr; gap: 8px; }
+.add-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+.add-row span { font-size: 11px; color: #7d8578; font-weight: 700; margin-right: 4px; }
+.sticky-save { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--card) 30%); padding: 16px 0 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; z-index: 2; }
+
+/* 차트 */
+.chart-card { border-top: 1px solid #d7d9cf; padding: 18px 0 20px; }
+.chart-card:first-child { border-top: 0; padding-top: 0; }
+.chart-card h4 { font-family: "Noto Serif KR", serif; font-size: 15px; letter-spacing: -.05em; margin: 6px 0 12px; font-weight: 600; color: var(--ink); line-height: 1.5; }
+.chart-card small.q { color: var(--rust); font-size: 10px; font-weight: 800; letter-spacing: .1em; }
+.bars-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.text-samples { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.text-samples li { border-left: 2px solid #c99579; padding: 4px 10px; font-size: 12px; color: #5c695d; line-height: 1.6; background: #f8f5ee; word-break: break-word; }
+.nps-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10px; color: #7d897d; margin-top: 8px; }
+.nps-legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; }
+
+/* 전체화면 QR */
+.qr-full { position: fixed; inset: 0; z-index: 50; background: var(--paper); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
+.qr-full .qr-big { width: min(72vh, 86vw); aspect-ratio: 1; background: #fff; padding: 14px; box-shadow: 10px 10px 0 #e3ded1; }
+.qr-full .qr-big svg { width: 100%; height: 100%; display: block; }
+.qr-full h2 { font-family: "Noto Serif KR", serif; font-size: clamp(22px, 3vw, 38px); letter-spacing: -.06em; margin: 0; color: var(--forest); }
+.qr-full p { margin: 0; color: #6f776c; font-size: clamp(13px, 1.5vw, 18px); word-break: break-all; }
+.qr-full .close { position: absolute; top: 18px; right: 18px; }
+
+/* 설정 */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+.steps { margin: 0; padding-left: 18px; font-size: 12px; color: #5c695d; line-height: 1.9; list-style: decimal; }
+.code-box { max-height: 220px; overflow: auto; background: #1d302b; color: #e8e5d9; font-family: ui-monospace, Consolas, monospace; font-size: 11px; line-height: 1.5; padding: 12px; white-space: pre; margin: 10px 0; }
+
+@media (max-width: 1000px) {
+  .settings-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .survey-table thead { display: none; }
+  .survey-table tr { display: grid; grid-template-columns: 1fr auto; border-bottom: 1px solid #d9dbcf; padding: 12px 0; gap: 4px 10px; }
+  .survey-table td { border: 0; padding: 0; }
+  .survey-table td.title { grid-column: 1 / -1; }
+  .survey-table td.hide-sm { display: none; }
+  .q-row { grid-template-columns: 1fr; }
+}
+
+/* A4 인쇄: 보고서만 */
+@media print {
+  @page { size: A4; margin: 16mm; }
+  body { background: #fff; }
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: 0; padding: 0; }
+  .no-print { display: none !important; }
+}
+
+/* 객관식 가로 막대 */
+.hbars { display: grid; gap: 12px; }
+.hbar-label { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #4f5d52; margin-bottom: 5px; }
+.hbar-label b { color: var(--forest); white-space: nowrap; }
+.hbar-track { height: 10px; background: #ecece3; }
+.hbar-track i { display: block; height: 100%; transition: width .4s; }
+.bars-svg { max-width: 560px; }

@@ -123,7 +123,7 @@ async function readBlob<T>(pathname: string): Promise<{ value: T; etag: string }
   // useCache:false → CDN 캐시를 건너뛰고 방금 쓴 내용을 바로 읽는다
   const res = await get(pathname, { access: "private", useCache: false });
   if (!res || res.statusCode !== 200) return null;
-  return { value: (await new Response(res.stream).json()) as T, etag: res.blob.etag };
+  return { value: (await new Response(res.stream).json()) as T, etag: res.blob.etag.replace(/^W\//, "") }; // 압축 응답은 약한 ETag(W/"…") → ifMatch 에는 강한 ETag 가 필요
 }
 
 export function createBlobStore(): Store {
